@@ -12,7 +12,7 @@ function App() {
         <CodeEditor lang ="HTML" setter={setHtml}/>
         <CodeEditor lang ="CSS" setter={setCss}/>
         <CustomComponent html={html} css={css}/>
-        <Result js={html} css={css}/>
+        <Result html={html} css={css}/>
       </main>
   );
 }

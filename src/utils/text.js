@@ -111,92 +111,103 @@ const Handle = {
     }
 }
 
-export const HandleColor = (text) => {
+export const HandleColor = (text, lang) => {
+    const splited = text.split(/\r?\n|\r|\n/g);
     var tag = document.createElement("div");
-    tag = Type.String(text, tag)
-    tag = Type.Enter(text, tag)
+    splited.forEach(line =>{
+        var lineTag = document.createElement("div");
+        lineTag.classList.add('line');
+        lineTag = lang === "HTML" ? ColorHTML(line, lineTag) : ColorCSS(line, lineTag);
+        tag.appendChild(lineTag);
+    })
     return tag
 }
 
-const Type = {
-    String: (text, parent) => {
-        let finalTag = parent;
-        let stop = false
-        let result = text.indexOf("\"")
-        let result2 = text.indexOf("\"", result + 1)
+const ColorHTML = (text, div) => {
+    let finalTag = div;
 
-        var tagIni = document.createElement("span");
-        var textoIni = document.createTextNode(text.substring(0, result));
-        tagIni.appendChild(textoIni);
-        finalTag.appendChild(tagIni);
-
-        console.log(tagIni, "tagIni")
-
-        do {
-            if(result === -1) {
-                stop = true
-                var tagFin1 = document.createElement("span");
-                var textoFin1 = document.createTextNode(text.substring(result + 1, text.length-1))
-                tagFin1.appendChild(textoFin1);
-                finalTag.appendChild(tagFin1);
-                console.log(tagFin1, "tagFin1")
-            }
-            else {
-                if(result2 === -1) {
-                    stop = true
-                    finalTag.appendChild(document.createTextNode(text.substring(result + 1, text.length-1)))
-
-                    var tagFin = document.createElement("span");
-                    var textoFin = document.createTextNode(text.substring(result + 1, text.length-1))
-                    tagFin.appendChild(textoFin);
-                    finalTag.appendChild(tagFin);
-                    console.log(tagFin, "tagFin")
-                }
-                else{
-                    var tag = document.createElement("p");
-                    tag.setAttribute("style", 'color: green;' );
-                    var texto = document.createTextNode(text.substring(result, result2 + 1));
-                    tag.appendChild(texto);
-                    finalTag.appendChild(tag);
-                    console.log(tag, "tag")
-                    let before = result2 + 1;
-
-                    result = text.indexOf("\"", result2 + 1)
-                    result2 = text.indexOf("\"", result + 1)
-
-                    if(result2 !== -1 && result !== -1) {
-                        var tagMid = document.createElement("span");
-                        var textoMid = document.createTextNode(text.substring(before, result))
-                        tagMid.appendChild(textoMid);
-                        finalTag.appendChild(tagMid);
-                        console.log(tagMid, "tagMid")
-                    }
-                }
-            }
-        } while(!stop)
-
-        return finalTag
-    },
-    Enter: (parent) => {
-        let finalTag = parent;
-        console.log(parent)
-        parent.childNodes.forEach(child => {
-            let text = child.nodeValue;
-            let result = text.indexOf("\n")
-            var tagChild = document.createElement("span");
-            do{
-                if(result === -1) tagChild.appendChild(document.createTextNode(text))
-                else {
-                    tagChild.appendChild(document.createTextNode(text.substring(0, result)))
-                    let tag = document.createElement("br");
-                    tagChild.appendChild(tag)
-                    text = text.substring(result + 1, text.length)
-                    result = text.indexOf("\n")
-                }
-                
-            } while(result !== -1)
-            finalTag.appendChild(tagChild);
-        })
+    const index1 = text.indexOf("<");
+    const index2 = text.indexOf(">");
+    if(index1 !== 0) {
+        if(index1 === -1){ 
+            finalTag.appendChild(document.createTextNode(text))
+            return finalTag; 
+        }
+        finalTag.appendChild(document.createTextNode(text.substring(0, index1)))
+    }
+    if(index2 === -1) {
+        let subs = text.substring(index1 + 1, text.length);
+        finalTag = MakeTag(subs, finalTag, false);
         return finalTag;
     }
+
+    const tag = text.substring(index1 + 1, index2);
+    finalTag = MakeTag(tag, finalTag, true);
+    const texto = text.substring(index2 + 1, text.length);
+    return ColorHTML(texto, finalTag);
+}
+
+const MakeSpan = (text, color) => {
+    let span = document.createElement("span");
+    span.setAttribute("style", 'color:'+ color );
+    span.appendChild(document.createTextNode(text));
+    return span;
+}
+
+const MakeTag = (tag, toTag, completed) => {
+    const splited = tag.split(" ");
+    let finalTag = toTag;
+    finalTag.appendChild(document.createTextNode("<"));
+    finalTag.appendChild(MakeSpan(splited[0], "red"));
+    finalTag.appendChild(MakeProps(splited.slice(1).join('\u00a0'), splited[1] !== undefined));
+    if(completed)finalTag.appendChild(document.createTextNode(">"));
+    return finalTag;
+}
+
+const MakeProps = (info, space) => {
+    
+    let infoCopy = info;
+    const tag = MakeSpan(space ? " " : "" , "orange")
+    let index1, index2;
+    do {
+        index1 = infoCopy.indexOf("\"");
+        index2 = infoCopy.indexOf("\"", index1 + 1);
+
+        if(index1 === -1 || index2 === -1){
+            tag.appendChild(document.createTextNode(infoCopy));
+            return tag;
+        }
+        else {
+            tag.appendChild(document.createTextNode(infoCopy.substring(0, index1)));
+            tag.appendChild(MakeSpan(infoCopy.substring(index1, index2 + 1), "green"));
+            infoCopy = infoCopy.substring(index2 + 1, infoCopy.length);
+        }
+        
+    } while(index1 !== -1 && index2 !== -1);
+
+    return tag;
+}
+
+const ColorCSS = (text, div) => {
+    let finalTag = div;
+
+    const index1 = text.indexOf("<");
+    const index2 = text.indexOf(">");
+    if(index1 !== 0) {
+        if(index1 === -1){ 
+            finalTag.appendChild(document.createTextNode(text))
+            return finalTag; 
+        }
+        finalTag.appendChild(document.createTextNode(text.substring(0, index1)))
+    }
+    if(index2 === -1) {
+        let subs = text.substring(index1 + 1, text.length);
+        finalTag = MakeTag(subs, finalTag, false);
+        return finalTag;
+    }
+
+    const tag = text.substring(index1 + 1, index2);
+    finalTag = MakeTag(tag, finalTag, true);
+    const texto = text.substring(index2 + 1, text.length);
+    return ColorCSS(texto, finalTag);
 }

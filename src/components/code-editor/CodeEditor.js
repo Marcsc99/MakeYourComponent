@@ -8,31 +8,21 @@ const CodeEditor = ({lang, setter}) => {
     const [lineNumbers, setLineNumbers] = useState([<span key = "1">1</span>]);
 
     useEffect(()=> {
-        const element = document.getElementById(lang);
-        element.selectionStart = selection[0];
-        element.selectionEnd = selection[1];
-
+        const div = document.getElementById(lang);
+        const textarea = document.getElementById(lang + 1);
         const lines = getLine(code, code.length + 1);
         setLineNumbers(Array(lines).fill(null).map((_, i) => <span key = {i+1}>{i+1}</span>));
-        element.innerHTML = HandleColor(code).innerHTML;
-
-        const sel = window.getSelection();
-        const range = document.createRange();
-        sel.removeAllRanges();
-        range.selectNodeContents(element);
-        range.collapse(false);
-        sel.addRange(range);
-
-        /*HandleColor(code).childNodes.forEach((item) => {
-            element.appendChild(item)
-        }
-        );*/
-
+        div.innerHTML = HandleColor(code, lang)?.innerHTML;
+        const line = getLine(code, selection[0]);
+        div.childNodes[line-1].style.backgroundColor = "rgba(0,0,0,0.5)";
+        textarea.selectionStart = selection[0];
+        textarea.selectionEnd = selection[1];
     },[code, lang, selection]);
 
     const handleScroll = (e) => {
         const scroll = e.target.scrollTop;
         e.target.parentElement.firstChild.scrollTop = scroll;
+        e.target.parentElement.lastChild.scrollTop = scroll;
     }
 
     return (
@@ -40,19 +30,22 @@ const CodeEditor = ({lang, setter}) => {
         <StyledCodeEditorHeader>
             <h2>{lang}</h2>
         </StyledCodeEditorHeader>
-        <StyledCodeEditorBody onScroll={handleScroll}>
+        <StyledCodeEditorBody>
             <section>
                 {lineNumbers}
             </section>
             
-            <div contentEditable = "true"
-                id={lang}
+            <textarea contentEditable = "true"
+                spellCheck="false"
+                id={lang + 1}
                 placeholder="Write your code here..." 
-                onChange={(e) => { setCode(e.target.value); setter(e.target.value); }} 
                 onKeyDown = {(e) => onKeyDown(e, code, setCode, setSelection, setter)}
                 onScroll = {handleScroll}
+                value = {code}
+                cols="10000"
             >
-            </div>
+            </textarea>
+            <div id={lang} className="shownCode"></div>
         </StyledCodeEditorBody>
         </StyledCodeEditor>
     );

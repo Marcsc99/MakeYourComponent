@@ -10,12 +10,12 @@ const StyledResult = styled.div`
     }
 `
 
-const Result = ({js, css}) => {
-    const [result, setResult] = useState(js);
+const Result = ({html, css}) => {
+    const [result, setResult] = useState(html);
 
     useEffect(() => {
-        setResult(ConvertStringToHTML(js))
-    }, [js, css]);
+        setResult(ConvertStringToHTML(html))
+    }, [html, css]);
 
     const ConvertStringToHTML = (str) => {
         let parser = new DOMParser();

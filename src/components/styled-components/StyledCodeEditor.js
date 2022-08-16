@@ -31,24 +31,53 @@ export const StyledCodeEditorBody = styled.div`
     color: white;
     background: #1e1e1e;
     display:flex;
+    position: relative;
+    
 
-    div {
+    .shownCode {
+        position:absolute;
+        font-size: 1rem;
+        width:calc(100% - 40px);
+        height:calc(100% - 50px);
+        margin-left:20px;
+        padding:10px 10px 40px 10px;
+        overflow:hidden;
+        display:flex;
+        flex-direction: column;
+        white-space: pre;
+
+        .line {
+            min-height: 21px;
+            span{ min-height: 21px; }
+        }
+        pointer-events: none; 
+    }
+
+    textarea {
+        z-index: 1;
+        position:absolute;
         outline: none;
         font-size: 1rem;
-        width:calc(100% - 20px);
+        width:calc(100% - 40px);
         height:calc(100% - 10px);
         margin:0;
+        margin-left:20px;
+        color: rgba(255,255,255,0);
+        caret-color: rgba(255,255,255,1);
         padding:10px 10px 0 10px;
         border:none;
-        background: #1e1e1e;
+        background: none;
+        opacity: 1;
         resize: none;
-        color:white;
         overflow-y:scroll;
-        display:flex;
-
-        ::-webkit-scrollbar { width: 10px; }
+        overflow-x:hidden;
+        white-space: nowrap;
+        line-height: 21px;
+        letter-spacing: 0px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+        ::-webkit-scrollbar { width: 10px; cursor:pointer;}
         ::-webkit-scrollbar-track {
-            box-shadow: inset 0 0 5px grey;
+            box-shadow: inset 0 0 10px grey;
             border-radius: 10px;
         }
 
@@ -60,17 +89,18 @@ export const StyledCodeEditorBody = styled.div`
     }
     section {
         width: 20px;
-        height: calc(100% - 10px);
+        height: calc(100% - 50px);
         background: #1e1e1e;
         display:flex;
         flex-direction: column;
         align-items: center;
         padding-top: 10px;
+        padding-bottom:40px;
         overflow-y : hidden;
 
         span {
             font-size: 1rem; 
-            margin:-1px;
+            margin:0px;
         }
 
         ::-webkit-scrollbar {
