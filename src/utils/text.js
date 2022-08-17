@@ -112,14 +112,24 @@ const Handle = {
 }
 
 export const HandleColor = (text, lang) => {
-    const splited = text.split(/\r?\n|\r|\n/g);
     var tag = document.createElement("div");
-    splited.forEach(line =>{
+    if(lang === "HTML"){
+        const splited = text.split(/\r?\n|\r|\n/g);
+        splited.forEach(line => {
+            var lineTag = document.createElement("div");
+            lineTag.classList.add('line');
+            lineTag = ColorHTML(line, lineTag) 
+            tag.appendChild(lineTag);
+        })
+    }
+    else if(lang === "CSS"){
         var lineTag = document.createElement("div");
         lineTag.classList.add('line');
-        lineTag = lang === "HTML" ? ColorHTML(line, lineTag) : ColorCSS(line, lineTag);
+        lineTag = ColorCSS(text, lineTag) 
+        console.log(lineTag)
         tag.appendChild(lineTag);
-    })
+    }
+    
     return tag
 }
 
@@ -190,24 +200,102 @@ const MakeProps = (info, space) => {
 
 const ColorCSS = (text, div) => {
     let finalTag = div;
-
-    const index1 = text.indexOf("<");
-    const index2 = text.indexOf(">");
-    if(index1 !== 0) {
-        if(index1 === -1){ 
-            finalTag.appendChild(document.createTextNode(text))
-            return finalTag; 
+    let sections = [];
+    let i1 = 0, i2 = 0, count = 0, start = false;
+    text.split("").forEach((char, index) => {
+        if(char === "}") count--;
+        if(char === "{") { count++; start = true}
+        if(count === 0 && start) {
+            i2 = index;
+            sections = [...sections, text.substring(i1, i2+1)];
+            i1 = i2 + 1;
+            start = false;
         }
-        finalTag.appendChild(document.createTextNode(text.substring(0, index1)))
-    }
-    if(index2 === -1) {
-        let subs = text.substring(index1 + 1, text.length);
-        finalTag = MakeTag(subs, finalTag, false);
-        return finalTag;
-    }
-
-    const tag = text.substring(index1 + 1, index2);
-    finalTag = MakeTag(tag, finalTag, true);
-    const texto = text.substring(index2 + 1, text.length);
-    return ColorCSS(texto, finalTag);
+        if(index === text.length - 1) sections = [...sections, text.substring(i1, text.length)];
+    });
+    console.log(sections, "sections")
+    sections.forEach(section => {
+        finalTag = resolveSection(section, finalTag)
+    })
+    return finalTag;
 }
+
+const resolveSection = (section, div) => {
+    let finalTag = div;
+    const index1 = section.indexOf("{");
+    finalTag = resolveOut(section.substring(0, index1 === -1 ? section.length : index1), finalTag);
+    if(index1 !== -1){
+        finalTag.appendChild(document.createTextNode("{"))
+        finalTag = resolveIn(section.substring(index1 + 1, section.length), finalTag);
+    }
+    return finalTag;
+}
+
+const resolveOut = (text, div) => {
+    let finalTag = div;
+    const splited = text.indexOf(",") !== -1 ? text.split(",") : [text]
+    splited.forEach((item, i)=> {
+        const splited2 = item.split(":")
+        finalTag.appendChild(MakeSpan(splited2[0], "red"));
+        splited2.forEach((item2, index) => {
+            if(index !== 0){
+                finalTag.appendChild(document.createTextNode(":"));
+                finalTag.appendChild(MakeSpan(item2, "lightblue"));
+            }
+        })
+        if(i < splited.length - 1) finalTag.appendChild(document.createTextNode(","));
+    })
+    return finalTag;
+}
+const resolveIn = (text, div) => {
+    let finalTag = div;
+
+    let open = false;
+    let i1 = 0, i2 = 0, count = 0, lastSemiColon = 0, lastTwoPoints = 0;
+    const splited = text.split("");
+    splited.forEach((char, i) => {
+
+
+        const colon = lastSemiColon >= lastTwoPoints
+        const colonVal = lastSemiColon === 0 ? 0 : lastSemiColon + 1
+        if(!open){
+            if(char === ":"){
+                finalTag.appendChild(MakeSpan(text.substring(colon ? (colonVal): (lastTwoPoints + 1), i), colon ? "lightgrey": "orange"))
+                lastTwoPoints = i;
+                finalTag.appendChild(document.createTextNode(":"));
+            }
+            else if(char === ";"){
+                finalTag.appendChild(MakeSpan(text.substring(Math.max(lastSemiColon, lastTwoPoints) + 1, i), "orange"))
+                lastSemiColon = i;
+                finalTag.appendChild(document.createTextNode(";"));
+            }
+            else if(i === splited.length - 1){
+                if(lastTwoPoints > lastSemiColon) {
+                    finalTag.appendChild(MakeSpan(text.substring(lastTwoPoints + 1, i + 1), "orange"))
+                }
+                else{
+                    finalTag.appendChild(MakeSpan(text.substring(lastSemiColon === 0 ? 0 : lastSemiColon + 1, i+1), "lightgrey"))
+                }
+
+            }
+        }
+
+        if(char === "{") { 
+            if(!open) i1 = lastSemiColon === 0 ? 0 : lastSemiColon + 1
+            open = true; count++;
+        }
+        if(char === "}") count--;
+        //if(char === "}" && !open) finalTag.appendChild(document.createTextNode("}"));
+        if(open && count === 0) {
+            i2 = i;
+            finalTag = resolveSection(text.substring(i1, i2 + 1), finalTag);
+            i1 = i2 + 1;
+            open = false;
+            lastSemiColon = lastTwoPoints = i;
+        }
+
+    });
+    return finalTag;
+}
+
+const reverseString = (str) => str.split("").reverse().join("");
