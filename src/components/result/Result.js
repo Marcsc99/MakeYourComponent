@@ -5,9 +5,9 @@ const StyledResult = styled.div`
     background: white;
     width: 40%;
     height: 400px;
-    :first-child { 
-        ${props => props.css} 
-    }
+`
+const StyledResultBody = styled.div`
+    ${props => props.css}
 `
 
 const Result = ({html, css}) => {
@@ -15,17 +15,17 @@ const Result = ({html, css}) => {
 
     useEffect(() => {
         setResult(ConvertStringToHTML(html))
-    }, [html, css]);
+    }, [html]);
 
     const ConvertStringToHTML = (str) => {
         let parser = new DOMParser();
         let doc = parser.parseFromString(str, 'text/html');
         return doc.body;
-     };
+    };
 
     return (
-        <StyledResult css = {css}>
-            <div dangerouslySetInnerHTML={{ __html: result.innerHTML }}></div>
+        <StyledResult >
+            <StyledResultBody id="body" dangerouslySetInnerHTML={{ __html: result.innerHTML }} css = {css}></StyledResultBody>
         </StyledResult>
     );
 }
