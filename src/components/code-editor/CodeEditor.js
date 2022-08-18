@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import { onKeyDown, getLine, HandleColor } from '../../utils/text';
 import { StyledCodeEditor, StyledCodeEditorHeader,StyledCodeEditorBody } from '../styled-components/StyledCodeEditor';
 
@@ -7,17 +7,21 @@ const CodeEditor = ({lang, setter}) => {
     const [selection, setSelection] = useState([0,0]);
     const [lineNumbers, setLineNumbers] = useState([<span key = "1">1</span>]);
 
-    useEffect(()=> {
+    const setColor = useCallback(()=>{
         const div = document.getElementById(lang);
-        const textarea = document.getElementById(lang + 1);
-        const lines = getLine(code, code.length + 1);
-        setLineNumbers(Array(lines).fill(null).map((_, i) => <span key = {i+1}>{i+1}</span>));
         div.innerHTML = HandleColor(code, lang)?.innerHTML;
         const line = getLine(code, selection[0]);
         div.childNodes[line-1].style.backgroundColor = "rgba(0,0,0,0.5)";
+    }, [code, lang, selection])
+
+    useEffect(()=> {
+        const textarea = document.getElementById(lang + 1);
+        const lines = getLine(code, code.length + 1);
+        setLineNumbers(Array(lines).fill(null).map((_, i) => <span key = {i+1}>{i+1}</span>));
+        setColor();
         textarea.selectionStart = selection[0];
         textarea.selectionEnd = selection[1];
-    },[code, lang, selection]);
+    },[code, lang, selection, setColor]);
 
     const handleScroll = (e) => {
         const scroll = e.target.scrollTop;
@@ -35,13 +39,14 @@ const CodeEditor = ({lang, setter}) => {
                 {lineNumbers}
             </section>
             
-            <textarea contentEditable = "true"
+            <textarea
                 spellCheck="false"
                 id={lang + 1}
                 placeholder="Write your code here..." 
                 onKeyDown = {(e) => onKeyDown(e, code, setCode, setSelection, setter)}
                 onScroll = {handleScroll}
                 value = {code}
+                onChange={()=>{}}
                 cols="10000"
             >
             </textarea>

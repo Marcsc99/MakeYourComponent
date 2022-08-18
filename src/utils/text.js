@@ -112,49 +112,52 @@ const Handle = {
 }
 
 export const HandleColor = (text, lang) => {
-    var tag = document.createElement("div");
+    let tag = document.createElement("div");
     if(lang === "HTML"){
-        const splited = text.split(/\r?\n|\r|\n/g);
-        splited.forEach(line => {
-            var lineTag = document.createElement("div");
-            lineTag.classList.add('line');
-            lineTag = ColorHTML(line, lineTag) 
-            tag.appendChild(lineTag);
-        })
+        let tmpTag = document.createElement("div");
+        tmpTag = ColorHTML(text, tmpTag)
+        tag = MultipleLines(tmpTag, true);
     }
     else if(lang === "CSS"){
-        var lineTag = document.createElement("div");
-        lineTag.classList.add('line');
-        lineTag = ColorCSS(text, lineTag) 
-        console.log(lineTag)
-        tag.appendChild(lineTag);
+        let tmpTag = document.createElement("div");
+        tmpTag = ColorCSS(text, tmpTag)
+        tag = MultipleLines(tmpTag, false);
     }
-    
     return tag
 }
 
 const ColorHTML = (text, div) => {
     let finalTag = div;
-
-    const index1 = text.indexOf("<");
-    const index2 = text.indexOf(">");
-    if(index1 !== 0) {
-        if(index1 === -1){ 
-            finalTag.appendChild(document.createTextNode(text))
-            return finalTag; 
+    let sections = [];
+    let done = false;
+    let lastIndex = 0;
+    let indexMinor = text.indexOf("<")
+    let indexGreater = text.indexOf(">")
+    do {
+        if(lastIndex < indexMinor){
+            sections = [...sections, {type: "text", text: text.substring(lastIndex, indexMinor)}]
         }
-        finalTag.appendChild(document.createTextNode(text.substring(0, index1)))
-    }
-    if(index2 === -1) {
-        let subs = text.substring(index1 + 1, text.length);
-        finalTag = MakeTag(subs, finalTag, false);
-        return finalTag;
-    }
+        if(indexGreater === -1 && indexMinor === -1) {
+            sections = [...sections, {type: "text", text: text.substring(lastIndex, text.length)}]
+            done = true;
+        }
+        if(indexGreater === -1 && indexMinor !== -1) {
+            sections = [...sections, {type: "text", text: text.substring(indexMinor, text.length)}]
+            done = true;
+        }
+        if(indexGreater !== -1 && indexMinor !== -1){
+            sections = [...sections, {type: "tag", text: text.substring(indexMinor + 1, indexGreater)}]
+            lastIndex = indexGreater + 1;
+        }
+        indexMinor = text.indexOf("<", indexGreater + 1);
+        indexGreater = text.indexOf(">", indexGreater + 1);
+    } while(!done)
 
-    const tag = text.substring(index1 + 1, index2);
-    finalTag = MakeTag(tag, finalTag, true);
-    const texto = text.substring(index2 + 1, text.length);
-    return ColorHTML(texto, finalTag);
+    sections.forEach(section => {
+        if(section.type === "tag") finalTag = MakeTag(section.text, finalTag, true);
+        else if(section.type === "text") finalTag.appendChild(document.createTextNode(section.text))
+    })
+    return finalTag;
 }
 
 const MakeSpan = (text, color) => {
@@ -175,20 +178,20 @@ const MakeTag = (tag, toTag, completed) => {
 }
 
 const MakeProps = (info, space) => {
-    
+    let first = space;
     let infoCopy = info;
-    const tag = MakeSpan(space ? " " : "" , "orange")
+    const tag = MakeSpan("", "orange")
     let index1, index2;
     do {
         index1 = infoCopy.indexOf("\"");
         index2 = infoCopy.indexOf("\"", index1 + 1);
 
         if(index1 === -1 || index2 === -1){
-            tag.appendChild(document.createTextNode(infoCopy));
+            tag.appendChild(document.createTextNode((first ? '\u00a0' : "") + infoCopy)); first = false;
             return tag;
         }
         else {
-            tag.appendChild(document.createTextNode(infoCopy.substring(0, index1)));
+            tag.appendChild(document.createTextNode((first ? '\u00a0' : "") + infoCopy.substring(0, index1))); first = false;
             tag.appendChild(MakeSpan(infoCopy.substring(index1, index2 + 1), "green"));
             infoCopy = infoCopy.substring(index2 + 1, infoCopy.length);
         }
@@ -213,7 +216,6 @@ const ColorCSS = (text, div) => {
         }
         if(index === text.length - 1) sections = [...sections, text.substring(i1, text.length)];
     });
-    console.log(sections, "sections")
     sections.forEach(section => {
         finalTag = resolveSection(section, finalTag)
     })
@@ -247,6 +249,7 @@ const resolveOut = (text, div) => {
     })
     return finalTag;
 }
+
 const resolveIn = (text, div) => {
     let finalTag = div;
 
@@ -254,38 +257,48 @@ const resolveIn = (text, div) => {
     let i1 = 0, i2 = 0, count = 0, lastSemiColon = 0, lastTwoPoints = 0;
     const splited = text.split("");
     splited.forEach((char, i) => {
-
-
         const colon = lastSemiColon >= lastTwoPoints
         const colonVal = lastSemiColon === 0 ? 0 : lastSemiColon + 1
         if(!open){
             if(char === ":"){
-                finalTag.appendChild(MakeSpan(text.substring(colon ? (colonVal): (lastTwoPoints + 1), i), colon ? "lightgrey": "orange"))
+                finalTag.appendChild(MakeSpan(text.substring(colon ? (colonVal) : (lastTwoPoints + 1), i), colon ? "lightgrey": "orange"))
                 lastTwoPoints = i;
                 finalTag.appendChild(document.createTextNode(":"));
             }
             else if(char === ";"){
-                finalTag.appendChild(MakeSpan(text.substring(Math.max(lastSemiColon, lastTwoPoints) + 1, i), "orange"))
+                if(lastTwoPoints === 0) finalTag.appendChild(MakeSpan(text.substring(lastSemiColon, i), "lightgrey"));
+                else finalTag.appendChild(MakeSpan(text.substring(Math.max(lastSemiColon, lastTwoPoints) + 1, i), "orange"))
                 lastSemiColon = i;
                 finalTag.appendChild(document.createTextNode(";"));
             }
-            else if(i === splited.length - 1){
+            else if(i === splited.length - 1 && char !== "{"){
                 if(lastTwoPoints > lastSemiColon) {
-                    finalTag.appendChild(MakeSpan(text.substring(lastTwoPoints + 1, i + 1), "orange"))
+                    if(char === "}") {
+                        finalTag.appendChild(MakeSpan(text.substring(lastTwoPoints + 1, i), "orange"))
+                        finalTag.appendChild(document.createTextNode("}"));
+                    }
+                    else finalTag.appendChild(MakeSpan(text.substring(lastTwoPoints + 1, i + 1), "orange"))
                 }
                 else{
-                    finalTag.appendChild(MakeSpan(text.substring(lastSemiColon === 0 ? 0 : lastSemiColon + 1, i+1), "lightgrey"))
+                    if(char === "}") {
+                        finalTag.appendChild(MakeSpan(text.substring(lastSemiColon === 0 ? 0 : lastSemiColon + 1, i), "lightgrey"))
+                        finalTag.appendChild(document.createTextNode("}"));
+                    }
+                    else finalTag.appendChild(MakeSpan(text.substring(lastSemiColon === 0 ? 0 : lastSemiColon + 1, i+1), "lightgrey"))
                 }
-
             }
         }
-
+        
         if(char === "{") { 
             if(!open) i1 = lastSemiColon === 0 ? 0 : lastSemiColon + 1
             open = true; count++;
+            if(i === splited.length - 1) finalTag = resolveSection(text.substring(i1, i + 1), finalTag);
+            
         }
-        if(char === "}") count--;
-        //if(char === "}" && !open) finalTag.appendChild(document.createTextNode("}"));
+        else if(char === "}") count--;
+        else {
+            if(i === splited.length - 1 && open) finalTag = resolveSection(text.substring(i1, i + 1), finalTag);
+        }
         if(open && count === 0) {
             i2 = i;
             finalTag = resolveSection(text.substring(i1, i2 + 1), finalTag);
@@ -293,9 +306,72 @@ const resolveIn = (text, div) => {
             open = false;
             lastSemiColon = lastTwoPoints = i;
         }
-
     });
     return finalTag;
 }
 
-const reverseString = (str) => str.split("").reverse().join("");
+export const ConvertStringToHTML = (str) => {
+    let parser = new DOMParser();
+    let doc = parser.parseFromString(str, 'text/html');
+    return doc.body;
+}
+
+const MultipleLines = (parent, html) => {
+    let result = parent;
+    let tag = document.createElement("div");
+    const array = [...ConvertStringToHTML(result.innerHTML).childNodes]
+    console.log(array, "array")
+    let lineTag = document.createElement("div");
+    lineTag.classList.add('line');
+    if(array.length === 0) tag.appendChild(lineTag)
+    else {
+        let arrayFinal = []
+        if(html){
+            array.forEach((node) => {
+                if(node.nodeName === "#text") arrayFinal = [...arrayFinal, node];
+                else if(node.nodeName === "SPAN") arrayFinal = [...arrayFinal, ...[...ConvertStringToHTML(OneToMany(node).innerHTML).childNodes]]
+            })
+        }
+        else arrayFinal = array;
+        arrayFinal.forEach((item)=>{
+            let splited;
+            if(item.nodeName === "#text") splited = item.nodeValue.split(/\r?\n|\r|\n/g);
+            else if(item.nodeName === "SPAN") splited = item.textContent.split(/\r?\n|\r|\n/g);
+
+            if(splited.length === 1) lineTag.appendChild(item);
+            else {
+                splited.forEach((line, i) => {
+                    if(item.nodeName === "#text") lineTag.appendChild(document.createTextNode(line));
+                    else if(item.nodeName === "SPAN") lineTag.appendChild(MakeSpan(line, item.style.color));
+                    
+                    if(i !== splited.length - 1) {
+                        tag.appendChild(lineTag)
+                        lineTag = document.createElement("div");
+                        lineTag.classList.add('line');
+                    }
+                })
+            }
+        })
+        tag.appendChild(lineTag)
+    }
+    return tag;
+}
+
+const OneToMany = (parent) =>{
+    let result = parent;
+    let tag = document.createElement("div");
+    const array = [...ConvertStringToHTML(result.innerHTML).childNodes]
+    array.forEach((item) => {
+        const array2 = [...ConvertStringToHTML(item.innerHTML).childNodes]
+        if(array2.length > 1) {
+            [...OneToMany(item).innerHTML.childNodes].forEach((item2) => {
+                tag.appendChild(item2)
+            })
+        }
+        else {
+            if(item.nodeName === "#text") tag.appendChild(MakeSpan(item.nodeValue, result.style.color));
+            else if(item.nodeName === "SPAN") tag.appendChild(MakeSpan(item.textContent, item.style.color));
+        }
+    })
+    return tag;
+}

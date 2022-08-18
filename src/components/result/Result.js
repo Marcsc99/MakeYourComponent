@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from "react";
 import styled from 'styled-components';
+import { ConvertStringToHTML } from "../../utils/text";
 
 const StyledResult = styled.div`
     background: white;
@@ -16,12 +17,6 @@ const Result = ({html, css}) => {
     useEffect(() => {
         setResult(ConvertStringToHTML(html))
     }, [html]);
-
-    const ConvertStringToHTML = (str) => {
-        let parser = new DOMParser();
-        let doc = parser.parseFromString(str, 'text/html');
-        return doc.body;
-    };
 
     return (
         <StyledResult >
