@@ -9,7 +9,7 @@ const CustomComponent = ({html}) => {
 
     return (
         <StyledCustomeComponent>
-            <textarea readOnly value = {text}></textarea>
+            <textarea id="custom-component-text" readOnly value = {text}></textarea>
         </StyledCustomeComponent>
     );
 }
