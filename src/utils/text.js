@@ -342,7 +342,6 @@ export const HandleColor = (text, lang) => {
     let tmpTag;
     if(lang === "HTML") tmpTag = Code().HTML().Color(text)
     else if(lang === "CSS") tmpTag = Code().CSS().Color(text)
-    console.log(tmpTag, "tmpTag")
     return Code().MultipleLines(tmpTag, lang === "HTML");
 }
 
