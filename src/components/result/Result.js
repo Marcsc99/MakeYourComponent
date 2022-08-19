@@ -7,16 +7,12 @@ const StyledResult = styled.div`
     width: 40%;
     height: 400px;
 `
-const StyledResultBody = styled.div`
-    ${props => props.css}
-`
+const StyledResultBody = styled.div`${props => props.css}`
 
 const Result = ({html, css}) => {
     const [result, setResult] = useState(html);
 
-    useEffect(() => {
-        setResult(ConvertStringToHTML(html))
-    }, [html]);
+    useEffect(() => { setResult(ConvertStringToHTML(html)) }, [html]);
 
     return (
         <StyledResult >

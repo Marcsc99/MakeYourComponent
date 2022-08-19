@@ -11,7 +11,7 @@ function App() {
       <main>
         <CodeEditor lang ="HTML" setter={setHtml}/>
         <CodeEditor lang ="CSS" setter={setCss}/>
-        <CustomComponent html={html} css={css}/>
+        <CustomComponent html={html}/>
         <Result html={html} css={css}/>
       </main>
   );

@@ -14,19 +14,22 @@ const CodeEditor = ({lang, setter}) => {
         div.childNodes[line-1].style.backgroundColor = "rgba(0,0,0,0.5)";
     }, [code, lang, selection])
 
-    useEffect(()=> {
+    const updateSelection = useCallback(()=>{
         const textarea = document.getElementById(lang + 1);
+        textarea.selectionStart = selection[0];
+        textarea.selectionEnd = selection[1];
+    },[selection, lang])
+
+    useEffect(()=> {
         const lines = getLine(code, code.length + 1);
         setLineNumbers(Array(lines).fill(null).map((_, i) => <span key = {i+1}>{i+1}</span>));
         setColor();
-        textarea.selectionStart = selection[0];
-        textarea.selectionEnd = selection[1];
-    },[code, lang, selection, setColor]);
+        updateSelection()
+    },[code, lang, selection, setColor, updateSelection]);
 
-    const handleScroll = (e) => {
-        const scroll = e.target.scrollTop;
-        e.target.parentElement.firstChild.scrollTop = scroll;
-        e.target.parentElement.lastChild.scrollTop = scroll;
+    const handleScroll = ({target: {scrollTop, parentElement: {firstChild, lastChild}}}) => {
+        firstChild.scrollTop = scrollTop;
+        lastChild.scrollTop = scrollTop;
     }
 
     return (
