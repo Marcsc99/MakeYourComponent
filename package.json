@@ -1,11 +1,13 @@
 {
   "name": "make-your-component",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "App that helps you making new react components",
   "private": true,
+  "author": "Marc Sanchez Civantos",
+  "license": "ISC",
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-router-dom": "^6.3.0",
     "react-scripts": "5.0.1",
     "styled-components": "^5.3.5"
   },
@@ -15,11 +17,27 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Marcsc99/MakeYourComponent.git"
+  },
+  "keywords": [
+    "custom",
+    "components",
+    "web",
+    "site",
+    "react",
+    "reactjs",
+    "react-component"
+  ],
   "eslintConfig": {
     "extends": [
       "react-app",
       "react-app/jest"
     ]
+  },
+  "bugs": {
+    "url": "https://github.com/Marcsc99/MakeYourComponent/issues"
   },
   "browserslist": {
     "production": [
